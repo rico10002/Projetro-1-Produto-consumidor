@@ -14,7 +14,6 @@
 int buffer[tamanho];
 int ultimo = 0;
 int primeiro  = 0;
-int itens = 0;
 sem_t m;
 sem_t c;
 sem_t p;
@@ -25,7 +24,7 @@ void escreve(int q) {
     ultimo = (ultimo + 1) % tamanho; /* aumenta o valor do item */
 }
 
-int le() {
+int le() {// retorna o valor do item que estava no buffer, que È o que ser· consumido pelo consumidor
     int w;
 
     w = buffer[primeiro];   /* recupera o valor do buffer */
@@ -41,7 +40,6 @@ void *produtor1(void *arg) {
 
         sem_wait(&p);     // bloqueia produtor se o buffer estiver cheio
         sem_wait(&m);     // mutex
-        itens++;          // estado critico
         escreve(i);       // estado critico
         printf("\n Maquina produtora 1 produziu o item:  %d", i);
         i++;
@@ -58,7 +56,6 @@ void *produtor2(void *arg) {
 
         sem_wait(&p);     // bloqueia produtor se o buffer estiver cheio
         sem_wait(&m);     // mutex
-        itens++;          // estado critico
         escreve(i);       // estado critico
         printf("\n Maquina produtora 2 produziu o item:  %d", i);
         i++;
@@ -77,23 +74,18 @@ void *consumidor1(void *arg) {
        sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
        sem_wait(&m);     /* mutex */
 
-
         item = le();
-        if (item != -1)  {    /* o -1 indica que o buffer estava vazio */
-           itens--;
 
-           sleep(6);  /* dorme */
-           printf("\nConsumidor 1 processou o item %d", item);
-        }
-        else {
-           //printf("\nConsumidor: sem item para consumir");
-           i--; /* volta o contador de interacoes */
-        }
+        sleep(6);  /* dorme */
+        printf("\nConsumidor 1 processou o item %d", item);
+
+
+
        sem_post(&m);     /* mutex */
        sem_post(&p);
+    }
+    }
 
-    }
-    }
 
 
     void *consumidor2(void *arg) {
@@ -103,23 +95,17 @@ void *consumidor1(void *arg) {
        sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
        sem_wait(&m);     /* mutex */
 
-
         item = le();
-        if (item != -1)  {    /* o -1 indica que o buffer estava vazio */
-           itens--;
 
-           sleep(12);  /* dorme */
-           printf("\nConsumidor 2 processou o item %d", item);
-        }
-        else {
-           //printf("\nConsumidor: sem item para consumir");
-           i--; /* volta o contador de interacoes */
-        }
+        sleep(12);  /* dorme */
+        printf("\nConsumidor 2 processou o item %d", item);
+
+
        sem_post(&m);     /* mutex */
        sem_post(&p);
+    }
+    }
 
-    }
-    }
 
     void *consumidor3(void *arg) {
     int i, item;
@@ -128,30 +114,24 @@ void *consumidor1(void *arg) {
        sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
        sem_wait(&m);     /* mutex */
 
-
         item = le();
-        if (item != -1)  {    /* o -1 indica que o buffer estava vazio */
-           itens--;
 
-           sleep(2);  /* dorme */
-           printf("\nConsumidor 3 processou o item %d", item);
-        }
-        else {
-           //printf("\nConsumidor: sem item para consumir");
-           i--; /* volta o contador de interacoes */
-        }
+        sleep(2);  /* dorme */
+        printf("\nConsumidor 3 processou o item %d", item);
+
+
        sem_post(&m);     /* mutex */
        sem_post(&p);
+    }
+    }
 
-    }
-    }
 
 
 int main(int argc, char *argv[]) {
     int i;
     pthread_t prod1, prod2, con1, con2, con3; //nomeia threads
 
-    sem_init(&m, 0, 1);  // come√ßa os sem√°foros
+    sem_init(&m, 0, 1);  // inicia os semaforos
     sem_init(&c, 0, 0);
     sem_init(&p, 0, 10);
 
