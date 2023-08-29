@@ -19,12 +19,11 @@ sem_t c;
 sem_t p;
 
 void escreve(int q) {
-    int v = (q / 100);
     buffer[ultimo] = q;    /* coloca o q no buffer */
     ultimo = (ultimo + 1) % tamanho; /* aumenta o valor do item */
 }
 
-int le() {// retorna o valor do item que estava no buffer, que È o que ser· consumido pelo consumidor
+int le() {// retorna o valor do item que estava no buffer, que √© o que ser√° consumido pelo consumidor
     int w;
 
     w = buffer[primeiro];   /* recupera o valor do buffer */
