@@ -28,9 +28,6 @@ void escreve(int q) {
 int le() {
     int w;
 
-    if (itens==0)
-       return -1;
-
     w = buffer[primeiro];   /* recupera o valor do buffer */
     primeiro = (primeiro + 1) % tamanho;   /* aumenta o valor retirado */
     return w;
@@ -154,7 +151,7 @@ int main(int argc, char *argv[]) {
     int i;
     pthread_t prod1, prod2, con1, con2, con3; //nomeia threads
 
-    sem_init(&m, 0, 1);  /* comeÁa o sem·foro m com o valor 1 */
+    sem_init(&m, 0, 1);  /* come√ßa o sem√°foro m com o valor 1 */
     sem_init(&c, 0, 0);
     sem_init(&p, 0, 10);
 
