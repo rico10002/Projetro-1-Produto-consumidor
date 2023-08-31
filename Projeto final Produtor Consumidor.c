@@ -11,135 +11,118 @@
 
 #define tamanho 20
 
-int buffer[tamanho];
-int ultimo = 0;
-int primeiro  = 0;
-sem_t m;
-sem_t c;
-sem_t p;
+// Código com o intúito de simular maquinas produzindo e consumindo itens colocados em um buffer, com o uso de threads e de semáforos
 
-void escreve(int q) {
-    buffer[ultimo] = q;    /* coloca o q no buffer */
-    ultimo = (ultimo + 1) % tamanho; /* aumenta o valor do item */
+int buffer[tamanho];
+int ultimo = 0;//inteiros que serão usados durante o código para indicar as posições do buffer que terão item colocados e retirados
+int primeiro  = 0;
+
+int numero_produz = 1;  //inteiros que serão usados no código para indicar qual é o produtor e consumidor realizando a ação
+int numero_consome = 1;
+sem_t mutex; //mutualmente exclusivo
+sem_t consuma; //semáforo que indica ao consumidor se existe algo a ser consumido
+sem_t produza; //semáforo que indica ao produtor que existe espaço no buffer para que algo seja produzido e colocado naquele lugar
+
+void escreve(int item) {
+    buffer[ultimo] = item;    /* coloca o q no buffer */
+    ultimo = (ultimo + 1) % tamanho; /* aumenta o valor de ultimo, para que o próximo item seja colocado no próximo espaço no buffer*/
 }
 
-int le() {// retorna o valor do item que estava no buffer, que Ã© o que serÃ¡ consumido pelo consumidor
+int le_buffer() {// retorna o valor do item que estava no buffer, que é o que será consumido pelo consumidor
     int w;
 
     w = buffer[primeiro];   /* recupera o valor do buffer */
     primeiro = (primeiro + 1) % tamanho;   /* aumenta o valor retirado */
-    return w;
+    return w; // retorna o valor recuperado do buffer para o consumidor
+}
+
+int getRandomNumber() { // responsavel por criar a numeração dos itens criados pelos produtores e evitar repetições em excesso
+    int random_number = rand() % 100; // dá para random_number um valor aleatório entre 0 e 100
+    while (1) { //
+        int bFoundEqual = 0;
+        for (int i=ultimo; i>0; i--) {
+            if (buffer[i] == random_number) {   // toda essa parte é feita para impedir que o nóvo item tenha mesmo número de um já existente, aleatorizando o número novamente caso ele seja igual
+                bFoundEqual = 1;
+                break;
+            }
+        }
+        if (bFoundEqual == 0){
+            break;
+            }
+
+        random_number = rand() % 100;
+    }
+
+    return random_number;
+}
+
+void *produtor(void *arg) {
+    int novo_item;
+    int numero_proprio = numero_produz;
+    numero_produz = (numero_produz + 1);
+
+    while(1){
+        sleep( 5 * (float)rand()/RAND_MAX);// faz o produtor dormir por um tempo entre 0 e 5 micro-segundos
+
+        sem_wait(&produza);     // bloqueia produtor se o buffer estiver cheio
+        sem_wait(&mutex);     // mutex
+
+        novo_item = getRandomNumber(); //
+
+        escreve(novo_item);       // estado critico
+        printf("\n Maquina produtora %d produziu o item:  %d", numero_proprio, novo_item);
+
+        sem_post(&mutex);     // mutex
+        sem_post(&consuma);     // acorda o consumidor ao desbloquear o semaforo, dizendo que existe algo a ser consumido
+
+
+    }
 }
 
 
-void *produtor1(void *arg) {
-    int i = 101;
-    while(1){
-        sleep(4);
-
-        sem_wait(&p);     // bloqueia produtor se o buffer estiver cheio
-        sem_wait(&m);     // mutex
-        escreve(i);       // estado critico
-        printf("\n Maquina produtora 1 produziu o item:  %d", i);
-        i++;
-        sem_post(&m);     // mutex
-        sem_post(&c);     // acorda o consumidor ao desbloquear o semaforo
-
-    }
-}
-
-void *produtor2(void *arg) {
-    int i = 201;
-    while(1){
-        sleep(2);
-
-        sem_wait(&p);     // bloqueia produtor se o buffer estiver cheio
-        sem_wait(&m);     // mutex
-        escreve(i);       // estado critico
-        printf("\n Maquina produtora 2 produziu o item:  %d", i);
-        i++;
-        sem_post(&m);     // mutex
-        sem_post(&c);     // acorda o consumidor ao desbloquear o semaforo
-
-
-    }
-}
-
-
-void *consumidor1(void *arg) {
+void *consumidor(void *arg) {
     int i, item;
+    int numero_proprio = numero_consome;
+    numero_consome = (numero_consome + 1);
+
     while(1){
 
-       sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
-       sem_wait(&m);     /* mutex */
+       sem_wait(&consuma);     /* bloqueia se estiver vazio o buffer */
+       sem_wait(&mutex);     /* mutex */
 
-        item = le();
+        item = le_buffer();
 
-        sleep(6);  /* dorme */
-        printf("\nConsumidor 1 processou o item %d", item);
+        sleep( 5 * (float)rand()/RAND_MAX);// faz o produtor dormir por um tempo entre 0 e 5 micro-segundos
 
+        printf("\nConsumidor %d consumiu o item: %d", numero_proprio, item);
 
-
-       sem_post(&m);     /* mutex */
-       sem_post(&p);
+       sem_post(&mutex);     /* mutex */
+       sem_post(&produza);
     }
     }
-
-
-
-    void *consumidor2(void *arg) {
-    int i, item;
-    while(1){
-
-       sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
-       sem_wait(&m);     /* mutex */
-
-        item = le();
-
-        sleep(12);  /* dorme */
-        printf("\nConsumidor 2 processou o item %d", item);
-
-
-       sem_post(&m);     /* mutex */
-       sem_post(&p);
-    }
-    }
-
-
-    void *consumidor3(void *arg) {
-    int i, item;
-    while(1){
-
-       sem_wait(&c);     /* bloqueia se estiver vazio o buffer */
-       sem_wait(&m);     /* mutex */
-
-        item = le();
-
-        sleep(2);  /* dorme */
-        printf("\nConsumidor 3 processou o item %d", item);
-
-
-       sem_post(&m);     /* mutex */
-       sem_post(&p);
-    }
-    }
-
 
 
 int main(int argc, char *argv[]) {
     int i;
     pthread_t prod1, prod2, con1, con2, con3; //nomeia threads
 
-    sem_init(&m, 0, 1);  // inicia os semaforos
-    sem_init(&c, 0, 0);
-    sem_init(&p, 0, 10);
+    sem_init(&mutex, 0, 1);  // inicia os semaforos
+    sem_init(&consuma, 0, 0);
+    sem_init(&produza, 0, 20);
 
     /* Cria as threads de produtores e consumidores */
-    pthread_create(&prod1, NULL, produtor1, NULL);
-    pthread_create(&prod2, NULL, produtor2, NULL);
-    pthread_create(&con1, NULL, consumidor1, NULL);
-    pthread_create(&con2, NULL, consumidor2, NULL);
-    pthread_create(&con3, NULL, consumidor3, NULL);
+    srand(time(NULL));
+    pthread_create(&prod1, NULL, produtor, NULL);
+
+    pthread_create(&prod1, NULL, produtor, NULL);
+
+    pthread_create(&prod2, NULL, produtor, NULL);
+
+    pthread_create(&con1, NULL, consumidor, NULL);
+
+    pthread_create(&con2, NULL, consumidor, NULL);
+
+    pthread_create(&con3, NULL, consumidor, NULL);
 
 
     /* Aguarda o fim das threads */
@@ -148,6 +131,11 @@ int main(int argc, char *argv[]) {
     pthread_join(con1, NULL);
     pthread_join(con2, NULL);
     pthread_join(con3, NULL);
+
+
+    int sem_destroy(sem_t *produza);
+    int sem_destroy(sem_t *consuma);
+    int sem_destroy(sem_t *mutex);
 
 
     printf("\n\n");
