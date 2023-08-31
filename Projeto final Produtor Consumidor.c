@@ -29,11 +29,11 @@ void escreve(int item) {
 }
 
 int le_buffer() {// retorna o valor do item que estava no buffer, que é o que será consumido pelo consumidor
-    int w;
+    int item;
 
-    w = buffer[primeiro];   /* recupera o valor do buffer */
+    item = buffer[primeiro];   /* recupera o valor do buffer */
     primeiro = (primeiro + 1) % tamanho;   /* aumenta o valor retirado */
-    return w; // retorna o valor recuperado do buffer para o consumidor
+    return item; // retorna o valor recuperado do buffer para o consumidor
 }
 
 int getRandomNumber() { // responsavel por criar a numeração dos itens criados pelos produtores e evitar repetições em excesso
@@ -41,7 +41,7 @@ int getRandomNumber() { // responsavel por criar a numeração dos itens criados p
     while (1) { //
         int bFoundEqual = 0;
         for (int i=ultimo; i>0; i--) {
-            if (buffer[i] == random_number) {   // toda essa parte é feita para impedir que o nóvo item tenha mesmo número de um já existente, aleatorizando o número novamente caso ele seja igual
+            if (buffer[i] == random_number) {   // toda essa parte é feita para impedir que o novo item tenha mesmo número de um já existente, aleatorizando o número novamente caso ele seja igual
                 bFoundEqual = 1;
                 break;
             }
@@ -81,7 +81,7 @@ void *produtor(void *arg) {
 
 
 void *consumidor(void *arg) {
-    int i, item;
+    int item;
     int numero_proprio = numero_consome;
     numero_consome = (numero_consome + 1);
 
@@ -103,8 +103,7 @@ void *consumidor(void *arg) {
 
 
 int main(int argc, char *argv[]) {
-    int i;
-    pthread_t prod1, prod2, con1, con2, con3; //nomeia threads
+    pthread_t prod1, prod2, prod3, con1, con2, con3; //nomeia threads
 
     sem_init(&mutex, 0, 1);  // inicia os semaforos
     sem_init(&consuma, 0, 0);
@@ -114,9 +113,9 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     pthread_create(&prod1, NULL, produtor, NULL);
 
-    pthread_create(&prod1, NULL, produtor, NULL);
-
     pthread_create(&prod2, NULL, produtor, NULL);
+
+    pthread_create(&prod3, NULL, produtor, NULL);
 
     pthread_create(&con1, NULL, consumidor, NULL);
 
@@ -128,6 +127,7 @@ int main(int argc, char *argv[]) {
     /* Aguarda o fim das threads */
     pthread_join(prod1, NULL);
     pthread_join(prod2, NULL);
+    pthread_join(prod3, NULL);
     pthread_join(con1, NULL);
     pthread_join(con2, NULL);
     pthread_join(con3, NULL);
